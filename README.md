@@ -9,7 +9,7 @@ go get github.com/wuyunhua1987/query-builder
 ## Usage
 
 ```go
-import builder "github.com/wuyunhua1987/query-builder"
+import "github.com/wuyunhua1987/query-builder/builder"
 
 b := builder.New()
 
@@ -30,8 +30,8 @@ cond := b.And(
 )
 
 sql, values := cond.Parse()
-// (`id` = ? AND `name` like ? AND `status` IN (?) AND `delete` IS NULL AND (`email` <> ? OR `state` <> ? OR (`phone` IS NOT NULL AND `tel` = ?) OR `del` = ?))
-// [1 %a% 1,2 a@b.com 2,3 01 0]
+fmt.Println(sql, values)
+// (`id` = ? AND `name` like ? AND `status` IN (?) AND `delete` IS NULL AND (`email` <> ? OR `state` <> ? OR (`phone` IS NOT NULL AND `tel` = ?) OR `del` = ?)) [1 %a% 1,2 a@b.com 2,3 01 0]
 ```
 
 ## 
