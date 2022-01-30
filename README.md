@@ -1,4 +1,4 @@
-# 一个简单的生成SQL where条件的pkg
+# 一个简单的生成SQL where语句的pkg
 
 ## 安装
 
@@ -13,7 +13,7 @@ import "github.com/wuyunhua1987/query-builder/builder"
 
 b := builder.New()
 
-cond := b.And(
+b.And(
     b.Equal("id", 1),
     b.Like("name", "a", true, true),
     b.In("status", "1,2"),
@@ -29,9 +29,9 @@ cond := b.And(
     ),
 )
 
-sql, values := cond.Parse()
+sql, values := b.Parse()
 fmt.Println(sql, values)
-// (`id` = ? AND `name` like ? AND `status` IN (?) AND `delete` IS NULL AND (`email` <> ? OR `state` <> ? OR (`phone` IS NOT NULL AND `tel` = ?) OR `del` = ?)) [1 %a% 1,2 a@b.com 2,3 01 0]
+// `id` = ? AND `name` like ? AND `status` IN (?) AND `delete` IS NULL AND (`email` <> ? OR `state` <> ? OR (`phone` IS NOT NULL AND `tel` = ?) OR `del` = ?) [1 %a% 1,2 a@b.com 2,3 01 0]
 ```
 
 ## 扩展
@@ -57,7 +57,7 @@ func (b *BitBuilder) Parse() (string, interface{}) {
 ```go
 b := builder.New()
 
-cond := b.And(
+b.And(
     b.Equal("id", 1),
     b.Like("name", "a", true, true),
     b.In("status", "1,2"),
@@ -74,9 +74,9 @@ cond := b.And(
     &BitBuilder{"status", 0x1111}, // <======= 在这里使用用自定义的
 )
 
-sql, values := cond.Parse()
+sql, values := b.Parse()
 fmt.Println(sql, values)
-// (`id` = ? AND `name` like ? AND `status` IN (?) AND `delete` IS NULL AND (`email` <> ? OR `state` <> ? OR (`phone` IS NOT NULL AND `tel` = ?) OR `del` = ?) AND status&01111 = ?) [1 %a% 1,2 a@b.com 2,3 01 0 4369]
+// `id` = ? AND `name` like ? AND `status` IN (?) AND `delete` IS NULL AND (`email` <> ? OR `state` <> ? OR (`phone` IS NOT NULL AND `tel` = ?) OR `del` = ?) AND status&01111 = ? [1 %a% 1,2 a@b.com 2,3 01 0 4369]
 ```
 
 3. 如果要扩展`And Or`也是一样的，只需要实现`Operate()`接口和`Parse() (string, interface{})`接口即可

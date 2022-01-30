@@ -4,7 +4,7 @@ import "testing"
 
 func TestBuilder(t *testing.T) {
 	b := New()
-	cond, val := b.And(
+	b.And(
 		b.Equal("id", 1),
 		b.Like("name", "a", true, true),
 		b.In("status", "1,2"),
@@ -18,7 +18,8 @@ func TestBuilder(t *testing.T) {
 			),
 			b.Equal("del", 0),
 		),
-	).Parse()
+	)
+	cond, val := b.Parse()
 	t.Log(cond)
 	t.Log(val)
 }

@@ -8,16 +8,35 @@ type QueryBuilder interface {
 	Parse() (string, interface{})
 }
 
-type Builder struct{}
+type Builder struct {
+	op OP
+}
 
 func New() *Builder {
 	return &Builder{}
 }
 
 func (b *Builder) And(query ...QueryBuilder) QueryBuilder {
-	return &AndBuilder{query}
+	and := &AndBuilder{query}
+	b.op = and
+	return and
 }
 
 func (b *Builder) Or(query ...QueryBuilder) QueryBuilder {
-	return &OrBuilder{query}
+	or := &OrBuilder{query}
+	b.op = or
+	return or
+}
+
+func (b *Builder) Parse() (string, []interface{}) {
+	switch t := b.op.(type) {
+	case *AndBuilder:
+		q, arg := t.Parse()
+		return q[1 : len(q)-1], arg.([]interface{})
+	case *OrBuilder:
+		q, arg := t.Parse()
+		return q[1 : len(q)-1], arg.([]interface{})
+	default:
+		return "", nil
+	}
 }
