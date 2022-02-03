@@ -28,6 +28,12 @@ func (b *Builder) Or(query ...QueryBuilder) QueryBuilder {
 	return or
 }
 
+func (b *Builder) Single(query QueryBuilder) QueryBuilder {
+	sg := &SingleBuilder{query}
+	b.op = sg
+	return sg
+}
+
 func (b *Builder) Parse() (string, []interface{}) {
 	switch t := b.op.(type) {
 	case *AndBuilder:
@@ -36,6 +42,9 @@ func (b *Builder) Parse() (string, []interface{}) {
 	case *OrBuilder:
 		q, arg := t.Parse()
 		return q[1 : len(q)-1], arg.([]interface{})
+	case *SingleBuilder:
+		q, arg := t.Parse()
+		return q, arg.([]interface{})
 	default:
 		return "", nil
 	}

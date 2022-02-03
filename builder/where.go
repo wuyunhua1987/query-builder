@@ -24,12 +24,12 @@ type NotEqualBuilder struct {
 
 type InBuilder struct {
 	col string
-	val interface{}
+	val []interface{}
 }
 
 type NotInBuilder struct {
 	col string
-	val interface{}
+	val []interface{}
 }
 
 type NULLBuilder struct {
@@ -61,11 +61,23 @@ func (b *NotEqualBuilder) Parse() (string, interface{}) {
 }
 
 func (b *InBuilder) Parse() (string, interface{}) {
-	return fmt.Sprintf("`%s` IN (?)", b.col), b.val
+	buf := new(bytes.Buffer)
+	for i := 0; i < len(b.val)-1; i++ {
+		buf.WriteByte('?')
+		buf.WriteByte(',')
+	}
+	buf.WriteByte('?')
+	return fmt.Sprintf("`%s` IN (%s)", b.col, buf.String()), b.val
 }
 
 func (b *NotInBuilder) Parse() (string, interface{}) {
-	return fmt.Sprintf("`%s` NOT IN (?)", b.col), b.val
+	buf := new(bytes.Buffer)
+	for i := 0; i < len(b.val)-1; i++ {
+		buf.WriteByte('?')
+		buf.WriteByte(',')
+	}
+	buf.WriteByte('?')
+	return fmt.Sprintf("`%s` NOT IN (%s)", b.col, buf.String()), b.val
 }
 
 func (b *NULLBuilder) Parse() (string, interface{}) {
@@ -88,12 +100,12 @@ func (*Builder) NotEqual(col string, val interface{}) QueryBuilder {
 	return &NotEqualBuilder{col, val}
 }
 
-func (*Builder) In(col string, val interface{}) QueryBuilder {
+func (*Builder) In(col string, val ...interface{}) QueryBuilder {
 	return &InBuilder{col, val}
 }
 
-func (*Builder) NotIn(col string, val interface{}) QueryBuilder {
-	return &NotEqualBuilder{col, val}
+func (*Builder) NotIn(col string, val ...interface{}) QueryBuilder {
+	return &NotInBuilder{col, val}
 }
 
 func (*Builder) NULL(col string) QueryBuilder {

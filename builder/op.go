@@ -13,8 +13,13 @@ type OrBuilder struct {
 	ops []QueryBuilder
 }
 
-func (*AndBuilder) Operate() {}
-func (*OrBuilder) Operate()  {}
+type SingleBuilder struct {
+	opt QueryBuilder
+}
+
+func (*AndBuilder) Operate()    {}
+func (*OrBuilder) Operate()     {}
+func (*SingleBuilder) Operate() {}
 
 func (b *AndBuilder) Parse() (string, interface{}) {
 	cols := []string{}
@@ -24,18 +29,24 @@ func (b *AndBuilder) Parse() (string, interface{}) {
 		case *AndBuilder:
 			col, val := t.Parse()
 			cols = append(cols, col)
-			valslice := val.([]interface{})
-			vals = append(vals, valslice...)
+			if valslice, ok := val.([]interface{}); ok {
+				vals = append(vals, valslice...)
+			}
 		case *OrBuilder:
 			col, val := t.Parse()
 			cols = append(cols, col)
-			valslice := val.([]interface{})
-			vals = append(vals, valslice...)
+			if valslice, ok := val.([]interface{}); ok {
+				vals = append(vals, valslice...)
+			}
 		default:
 			col, val := t.Parse()
 			cols = append(cols, col)
 			if val != nil {
-				vals = append(vals, val)
+				if valslice, ok := val.([]interface{}); ok {
+					vals = append(vals, valslice...)
+				} else {
+					vals = append(vals, val)
+				}
 			}
 		}
 	}
@@ -51,21 +62,51 @@ func (b *OrBuilder) Parse() (string, interface{}) {
 		case *OrBuilder:
 			col, val := t.Parse()
 			cols = append(cols, col)
-			valslice := val.([]interface{})
-			vals = append(vals, valslice...)
+			if valslice, ok := val.([]interface{}); ok {
+				vals = append(vals, valslice...)
+			}
 		case *AndBuilder:
 			col, val := t.Parse()
 			cols = append(cols, col)
-			valslice := val.([]interface{})
-			vals = append(vals, valslice...)
+			if valslice, ok := val.([]interface{}); ok {
+				vals = append(vals, valslice...)
+			}
 		default:
 			col, val := t.Parse()
 			cols = append(cols, col)
 			if val != nil {
-				vals = append(vals, val)
+				if valslice, ok := val.([]interface{}); ok {
+					vals = append(vals, valslice...)
+				} else {
+					vals = append(vals, val)
+				}
 			}
 		}
 	}
-	and := strings.Join(cols, " OR ")
-	return fmt.Sprintf("(%s)", and), vals
+	or := strings.Join(cols, " OR ")
+	return fmt.Sprintf("(%s)", or), vals
+}
+
+func (b *SingleBuilder) Parse() (string, interface{}) {
+	switch t := b.opt.(type) {
+	case *OrBuilder:
+		q, arg := t.Parse()
+		return q[1 : len(q)-1], arg.([]interface{})
+	case *AndBuilder:
+		q, arg := t.Parse()
+		return q[1 : len(q)-1], arg.([]interface{})
+	case *SingleBuilder:
+		return t.Parse()
+	default:
+		vals := []interface{}{}
+		col, val := t.Parse()
+		if val != nil {
+			if valslice, ok := val.([]interface{}); ok {
+				vals = append(vals, valslice...)
+			} else {
+				vals = append(vals, val)
+			}
+		}
+		return col, vals
+	}
 }

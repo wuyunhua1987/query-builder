@@ -31,7 +31,20 @@ b.And(
 
 sql, values := b.Parse()
 fmt.Println(sql, values)
-// `id` = ? AND `name` like ? AND `status` IN (?) AND `delete` IS NULL AND (`email` <> ? OR `state` <> ? OR (`phone` IS NOT NULL AND `tel` = ?) OR `del` = ?) [1 %a% 1,2 a@b.com 2,3 01 0]
+// `id` = ? AND `name` like ? AND `status` IN (?,?) AND `delete` IS NULL AND (`email` <> ? OR `state` NOT IN (?,?) OR (`phone` IS NOT NULL AND `tel` = ?) OR `del` = ?) [1 %a% 1 2 a@b.com 2 3 01 0]
+```
+
+有时候不需要`and`、`or`，可以使用`Single()`
+
+```go
+b := New()
+b.Single(
+    b.Equal("id", 1),
+)
+cond, val := b.Parse()
+t.Log(cond)
+t.Log(val)
+// `id` = ? [1]
 ```
 
 ## 扩展
@@ -48,11 +61,11 @@ type BitBuilder struct {
 }
 
 func (b *BitBuilder) Parse() (string, interface{}) {
-	return fmt.Sprintf("%s&01111 = ?", b.col), b.val
+	return fmt.Sprintf("%s & 0b01111 = ?", b.col), b.val
 }
 ```
 
-2. 在`And Or`中使用
+2. 使用
 
 ```go
 b := builder.New()
@@ -60,11 +73,11 @@ b := builder.New()
 b.And(
     b.Equal("id", 1),
     b.Like("name", "a", true, true),
-    b.In("status", "1,2"),
+    b.In("status", 1, 2),
     b.NULL("delete"),
     b.Or(
         b.NotEqual("email", "a@b.com"),
-        b.NotIn("state", "2,3"),
+        b.NotIn("state", 2, 3),
         b.And(
             b.NotNULL("phone"),
             b.Equal("tel", "01"),
@@ -76,7 +89,7 @@ b.And(
 
 sql, values := b.Parse()
 fmt.Println(sql, values)
-// `id` = ? AND `name` like ? AND `status` IN (?) AND `delete` IS NULL AND (`email` <> ? OR `state` <> ? OR (`phone` IS NOT NULL AND `tel` = ?) OR `del` = ?) AND status&01111 = ? [1 %a% 1,2 a@b.com 2,3 01 0 4369]
+// `id` = ? AND `name` like ? AND `status` IN (?,?) AND `delete` IS NULL AND (`email` <> ? OR `state` NOT IN (?,?) OR (`phone` IS NOT NULL AND `tel` = ?) OR `del` = ?) [1 %a% 1 2 a@b.com 2 3 01 0]
 ```
 
-3. 如果要扩展`And Or`也是一样的，只需要实现`Operate()`接口和`Parse() (string, interface{})`接口即可
+3. 如果要扩展`操作`也是一样的，只需要实现`Operate()`接口和`Parse() (string, interface{})`接口即可
